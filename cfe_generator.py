@@ -89,7 +89,7 @@ class CFE:
             message = 'top item cannot be top item %d\t%d\t%e\t%e\t%e\t%e\n' % \
                       (top_item, item, sum_diff, self.p[top_item].get(user, 0.0), self.p[item].get(user, 0.0),
                        self.epsilon)
-            print message
+            print(message)
 
         for i in range(len(sorted_diff_values)-1):
             if i+1 > min_number:

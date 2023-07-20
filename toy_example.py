@@ -8,7 +8,7 @@ from cfe_generator import CFE
 
 
 def draw_interaction_graph(g, source, targets, top_target, selected_edges=[]):
-    node_colors_map = {node: 'white' for node in g.nodes()}
+    node_colors_map = {node: 'grey' for node in g.nodes()}
     node_colors_map[source] = 'red'
     for target in targets:
        node_colors_map[target] = 'green'
@@ -17,8 +17,8 @@ def draw_interaction_graph(g, source, targets, top_target, selected_edges=[]):
 
     # red edges to neighbors of a source
     # red_edges = [(source, n) for n in g.successors(source)]
-    red_edges = selected_edges
-    black_edges = [edge for edge in g.edges() if edge not in red_edges]
+    red_edges = selected_edges #selected edges are prince explanations
+    black_edges = [edge for edge in g.edges() if edge not in red_edges if edge[0] != edge[1]] #second conditon removes self edges
 
     # edge labels
     edge_labels = dict([((u, v,), d['weight'])
@@ -33,7 +33,9 @@ def draw_interaction_graph(g, source, targets, top_target, selected_edges=[]):
     # nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels)
     nx.draw_networkx_edges(g, pos, edgelist=red_edges, edge_color='r', arrows=True)
     nx.draw_networkx_edges(g, pos, edgelist=black_edges, arrows=False)
-    plt.show()
+    # nx.draw(g)
+    print("end")
+    # plt.show()
 
 
 def interaction_graph_generator(num_nodes, num_edges, num_neighbors, num_targets, num_neighbors_target):
@@ -104,14 +106,14 @@ def add_weights(g, mode='random'):
 
     if mode == 'uniform':
         for node in g.nodes():
-            num_succ = len(g.successors(node))
+            num_succ = len(list(g.successors(node)))
             for neighbor in g.successors(node):
                 g[node][neighbor]['weight'] = 1.0 / num_succ
 
 
 if __name__ == "__main__":
     num_nodes = 12
-    num_edges = 45
+    num_edges = 40
     num_neighbors = 5
     num_targets = 2
     num_neighbors_target = 2
@@ -122,14 +124,17 @@ if __name__ == "__main__":
     g, source_node, target_nodes = interaction_graph_generator(num_nodes, num_edges, num_neighbors, num_targets,
                                                                    num_neighbors_target=num_neighbors_target)
 
+    #dras the graph
+    # nx.draw(g)
+
     # printing statistics
-    print '============ Graph statistics ============'
-    print 'Source node:', source_node
+    print( '============ Graph statistics ============')
+    print(  'Source node:', source_node)
     s_neighbors = []
     for n in g.successors(source_node):
         if n != source_node:
             s_neighbors.append(n)
-    print 'source node has', len(s_neighbors), 'neighbors:', s_neighbors
+    print(  'source node has', len(s_neighbors), 'neighbors:', s_neighbors)
 
 
     # tuning graph into a weighted one
@@ -161,8 +166,8 @@ if __name__ == "__main__":
         r_other_org = r_1
     # print p_1
     # print p_2
-    print 'Top item:', top_node
-    print 'Replacement item:', other_node
+    print(  'Top item:', top_node)
+    print(  'Replacement item:', other_node)
 
     # instantiating counterfactual explanation
     p_both_org = {top_node: dict(p_top_org), other_node: dict(p_other_org)}
@@ -172,7 +177,7 @@ if __name__ == "__main__":
     min_actions_toy = 1000000
 
     # searching over all the subsets of actions exhaustively
-    print '============ All Counterfactual Explanations ============'
+    print(  '============ All Counterfactual Explanations ============')
     contributions = {}
     x = [itertools.combinations(s_neighbors, r) for r in range(1, len(s_neighbors))]
     exp_count = 1
@@ -211,8 +216,8 @@ if __name__ == "__main__":
             if p_top.get(source_node, 0.0) + 2*epsilon < p_other.get(source_node, 0.0) and min_actions_toy > len(neighbors):
                 min_actions_toy = len(neighbors)
             if p_top.get(source_node, 0.0) + 2*epsilon < p_other.get(source_node, 0.0) and min_actions_toy == len(neighbors):
-                print 'Explanation', exp_count
-                print [(source_node, elem) for elem in neighbors]
+                print('Explanation', exp_count)
+                print([(source_node, elem) for elem in neighbors])
                 # print 'Replacement item updated score:', p_other.get(source_node, 0.0)
                 # print 'top item updated score', p_top.get(source_node, 0.0)
                 exp_count += 1
@@ -221,9 +226,9 @@ if __name__ == "__main__":
     cfe_instance.compute_pagerank_wo_u(source_node, [top_node, other_node])
     cfe, replacing_item, min_number = cfe_instance.cfe_item_centric_algo_poly(source_node, top_node, [top_node,
                                                                                                   other_node])
-    print '============ PRINCE Explanation ============'
+    print(  '============ PRINCE Explanation ============')
     prince_exp = [(source_node, elem) for elem in cfe]
-    print prince_exp
+    print(  prince_exp)
 
     draw_interaction_graph(g, source=source_node, targets=target_nodes, top_target=top_node, selected_edges=prince_exp)
 
